@@ -7,7 +7,7 @@ jobs:
             - checkout
             - run: git submodule sync
             - run: git submodule update --init
-            - run: docker build -t build-linux-aarch64 -f ./Dockerfile_linux_aarch64 .
+            - run: docker build -t build-linux-aarch64 .
             - run: docker run -v $(realpath ./qemu):/mnt/src build-linux-aarch64
             - store_artifacts:
                 destination: qemu-aarch64-unknown-linux-gnu
@@ -19,7 +19,7 @@ jobs:
             - checkout
             - run: git submodule sync
             - run: git submodule update --init
-            - run: docker build -t build-linux-x86-64 -f ./Dockerfile_linux_x86_64 .
+            - run: docker build -t build-linux-x86-64 .
             - run: docker run -v $(realpath ./qemu):/mnt/src build-linux-x86-64
             - store_artifacts:
                 destination: qemu-x86_64-unknown-linux-gnu
