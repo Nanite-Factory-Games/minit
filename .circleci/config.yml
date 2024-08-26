@@ -47,6 +47,7 @@ workflows:
             - build-linux-aarch64
             - build-linux-x86_64
             - publish-github-release:
+                context: Github
                 requires:
                     - build-linux-aarch64
                     - build-linux-x86_64
