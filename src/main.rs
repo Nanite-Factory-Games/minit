@@ -61,10 +61,10 @@ unsafe fn wrapped_main() {
         signalfd::SignalFd::new(&sigmask).expect("could not create signalfd for all signals");
 
     // Spawn the child. if entrypoint is defined, use it, otherwise use the main command
-    let mut command = Command::new(config.minit_entrypoint_path.clone().unwrap_or(config.minit_cmd.clone()));
+    let mut command = Command::new(config.entrypoint_path.clone().unwrap_or(config.cmd.clone()));
     // We only need to pass command as args if we are using the entrypoint
-    if config.minit_entrypoint_path.is_some() {
-        command.args(config.minit_cmd.split_whitespace());
+    if config.entrypoint_path.is_some() {
+        command.args(config.cmd.split_whitespace());
     }
 
     let child = command.pre_exec(move || {
