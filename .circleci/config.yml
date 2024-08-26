@@ -1,0 +1,48 @@
+jobs:
+    build-linux-aarch64:
+        machine:
+            image: ubuntu-2204:2023.07.1
+            resource_class: arm.medium
+        steps:
+            - checkout
+            - run: git submodule sync
+            - run: git submodule update --init
+            - run: docker build -t build-linux-aarch64 -f ./Dockerfile_linux_aarch64 .
+            - run: docker run -v $(realpath ./qemu):/mnt/src build-linux-aarch64
+            - store_artifacts:
+                destination: qemu-aarch64-unknown-linux-gnu
+                path: qemu/build/qemu-system-x86_64
+    build-linux-x86_64:
+        machine:
+            image: ubuntu-2204:2024.05.1
+        steps:
+            - checkout
+            - run: git submodule sync
+            - run: git submodule update --init
+            - run: docker build -t build-linux-x86-64 -f ./Dockerfile_linux_x86_64 .
+            - run: docker run -v $(realpath ./qemu):/mnt/src build-linux-x86-64
+            - store_artifacts:
+                destination: qemu-x86_64-unknown-linux-gnu
+                path: qemu/build/qemu-system-x86_64
+    publish-github-release:
+        docker:
+            - image: cibuilds/github:0.10
+        steps:
+            - attach_workspace:
+                at: ./artifacts
+            - run:
+                command: |
+                    VERSION=9.0.1
+                    ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./artifacts/
+                name: Publish Release on GitHub
+version: 2.1
+workflows:
+    build-crossplatform:
+        jobs:
+            - build-linux-aarch64
+            - build-linux-x86_64
+            - publish-github-release:
+                requires:
+                    - build-linux-aarch64
+                    - build-linux-x86_64
+
