@@ -32,19 +32,16 @@ jobs:
                     - minit-x86_64
     publish-github-release:
         docker:
-            - image: cibuilds/github:0.10
+            - image: rust:latest
         steps:
+            - checkout
             - attach_workspace:
                 at: ./artifacts
+            - run: GHR_URL=https://github.com/tcnksm/ghr/releases/download/v0.13.0/ghr_v0.13.0_linux_amd64.tar.gz
+            - run: wget "$GHR_URL" && tar xzf ghr_v${GHR_VERSION}_linux_amd64.tar.gz && mv ghr_v${GHR_VERSION}_linux_amd64/ghr /usr/bin/ghr && rm -r ghr_v${GHR_VERSION}_linux_amd64.tar.gz ghr_v${GHR_VERSION}_linux_amd64/
             - run:
                 command: |
-                    VERSION=0.1.0
-                    echo ${GITHUB_TOKEN}
-                    echo ${CIRCLE_PROJECT_USERNAME}
-                    echo ${CIRCLE_PROJECT_REPONAME}
-                    echo ${CIRCLE_SHA1}
-                    echo ${VERSION}
-                    ls -la ./artifacts
+                    VERSION=$(cargo read-manifest | grep -Po '"version":.*?[^\\]",' | grep -Po '[\d\.]+')
                     ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./artifacts/
                 name: Publish Release on GitHub
 version: 2.1

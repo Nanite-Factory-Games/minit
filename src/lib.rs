@@ -1,4 +1,4 @@
-use std::env::set_var;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::{Error, ErrorKind};
 use std::convert::TryFrom;
@@ -12,16 +12,16 @@ use nix::sys::wait::{self, waitpid};
 use nix::sys::signal::{self, kill, Signal};
 use nix::sys::signalfd;
 use nix::unistd::tcsetpgrp;
+use serde::Deserialize;
 
-pub mod environment;
-
-pub fn load_environment(input: &String)  {
-    let env = jsonic::parse(&input).expect("Failed to parse environment file");
-    for (key, value) in env.entries().expect("Failed to parse environment file as map") {
-        let value = value.as_str().expect("Found invalid value in environment");
-        set_var(key.as_str(), value);
-    }
-
+#[derive(Deserialize)]
+pub struct Config {
+    /// If defined, should be the entrypoint minit passes cmd args to
+    pub minit_entrypoint_path: Option<String>,
+    /// Must be defined as it is the main program the os will run
+    pub minit_cmd: String,
+    /// Mapping of environment variables to their values
+    pub environment: Option<HashMap<String, String>>,
 }
 
 /// Reaps all zombies that are children of initrs, returning the list of pids

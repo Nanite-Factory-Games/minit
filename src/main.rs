@@ -1,26 +1,16 @@
-use std::{env, fs};
+use std::env::set_var;
+use std::fs;
 use std::path::Path;
 use std::process::Command;
 use std::os::unix::process::CommandExt;
 
 use env_logger::Env;
 
-use std::env::set_var;
 use log::{debug, info};
-use minit::{make_foreground, process_signals};
+use minit::{make_foreground, process_signals, Config};
 use nix::unistd::Pid;
 use nix::sys::signal::{self, SigSet};
 use nix::sys::signalfd;
-use clap::Parser;
-use jsonic::parse;
-
-#[derive(Debug, Parser)]
-#[clap(version, about)]
-struct Cli {
-	#[arg(trailing_var_arg = true)]
-    args: Vec<String>,
-}
-
 
 pub fn main() {
     unsafe {
@@ -32,16 +22,20 @@ pub fn main() {
 /// a little bit more readable.
 unsafe fn wrapped_main() {
 
-    // Load environment variables into the system from /etc/environment.json
-    let env_path = Path::new("/etc/environment.json");
-    if env_path.exists() {
-        minit::load_environment(
-            &fs::read_to_string(env_path).expect("Failed to read environment.json")
-        );
-    }
+    // Load the configuration used to initialize the main program
+    let config_path = Path::new("/etc/minit.json");
+    let config = serde_json::from_str::<Config>(
+        &fs::read_to_string(config_path)
+            .expect("Failed to read /etc/minit.json")
+        )
+        .expect("Failed to parse minit.json");
 
-    // Parse options.
-    let cli = Cli::parse();
+    // Set environment variables from config
+    if let Some(environment) = config.environment {
+        for (key, value) in environment {
+            set_var(key, value);
+        }
+    }
 
     // Set up logging.
     let env = Env::new()
@@ -66,13 +60,14 @@ unsafe fn wrapped_main() {
     let mut sfd =
         signalfd::SignalFd::new(&sigmask).expect("could not create signalfd for all signals");
 
-    // Get the arguments for the process to run.
-    let (cmd, args) = cli.args.as_slice().split_first().unwrap();
+    // Spawn the child. if entrypoint is defined, use it, otherwise use the main command
+    let mut command = Command::new(config.minit_entrypoint_path.clone().unwrap_or(config.minit_cmd.clone()));
+    // We only need to pass command as args if we are using the entrypoint
+    if config.minit_entrypoint_path.is_some() {
+        command.args(config.minit_cmd.split_whitespace());
+    }
 
-    // Spawn the child.
-    let child = Command::new(cmd)
-        .args(args)
-        .pre_exec(move || {
+    let child = command.pre_exec(move || {
             make_foreground()?;
             init_sigmask.thread_set_mask()?;
             return Ok(());
@@ -85,7 +80,6 @@ unsafe fn wrapped_main() {
     // errors are logged and ignored from here on out -- because we *must not exit* as we are pid1
     // and exiting will kill the container.
     let pid1 = Pid::from_raw(child.id() as i32);
-    debug!("spawned '{}' as pid1 with pid {}", cmd, pid1);
     loop {
         match process_signals(pid1, &mut sfd) {
             Err(err) => info!("unexpected error during signal handling: {}", err),
