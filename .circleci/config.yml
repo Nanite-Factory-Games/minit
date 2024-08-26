@@ -33,6 +33,7 @@ jobs:
             - run:
                 command: |
                     VERSION=0.1.0
+                    echo ${GITHUB_TOKEN}
                     echo ${CIRCLE_PROJECT_USERNAME}
                     echo ${CIRCLE_PROJECT_REPONAME}
                     echo ${CIRCLE_SHA1}
