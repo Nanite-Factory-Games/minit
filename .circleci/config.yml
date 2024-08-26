@@ -10,7 +10,7 @@ jobs:
             - run: docker build -t build-linux-aarch64 -f Dockerfile-aarch64 .
             - run: docker run -v $(realpath ./):/mnt/src build-linux-aarch64
             - run: mkdir -p ./artifacts/
-            - run: mv target/aarch64-unknown-linux-gnu/release/minit ./artifacts/minit-aarch64
+            - run: sudo mv target/aarch64-unknown-linux-gnu/release/minit ./artifacts/minit-aarch64
             - persist_to_workspace:
                 root: ./artifacts
                 paths:
@@ -25,7 +25,7 @@ jobs:
             - run: docker build -t build-linux-x86-64 -f Dockerfile-x86_64 .
             - run: docker run -v $(realpath ./):/mnt/src build-linux-x86-64
             - run: mkdir -p ./artifacts/
-            - run: mv target/x86_64-unknown-linux-gnu/release/minit ./artifacts/minit-x86_64
+            - run: sudo mv target/x86_64-unknown-linux-gnu/release/minit ./artifacts/minit-x86_64
             - persist_to_workspace:
                 root: ./artifacts
                 paths:
