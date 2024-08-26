@@ -1,0 +1,33 @@
+name: 'Build Linux x86_64 and aarch64'
+
+on:
+  workflow_call:
+
+jobs:
+  build-linux-x86-64:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      with:
+        submodules: 'true'
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Build Docker image for x86_64
+      run: docker build -t build-linux-x86-64 .
+
+    - name: Run Docker container with volume mount
+      run: docker run -v ${{ github.workspace }}/:/mnt/src build-linux-x86-64
+    
+    - name: Rename output binary
+      run: mkdir ${{ github.workspace }}/build && sudo mv ${{ github.workspace }}/target/x86_64-unknown-linux-gnu/release/minit(x86_64) ${{ github.workspace }}/build/minit(x86_64)
+
+    - name: upload linux artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: uploads
+        path: ${{ github.workspace }}/target/x86_64-unknown-linux-gnu/release/minit(x86_64)
+        if-no-files-found: error
