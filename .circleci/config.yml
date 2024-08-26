@@ -37,6 +37,7 @@ jobs:
             - checkout
             - attach_workspace:
                 at: ./artifacts
+            - run: GHR_VERSION=0.13.0
             - run: GHR_URL=https://github.com/tcnksm/ghr/releases/download/v0.13.0/ghr_v0.13.0_linux_amd64.tar.gz
             - run: wget "$GHR_URL" && tar xzf ghr_v${GHR_VERSION}_linux_amd64.tar.gz && mv ghr_v${GHR_VERSION}_linux_amd64/ghr /usr/bin/ghr && rm -r ghr_v${GHR_VERSION}_linux_amd64.tar.gz ghr_v${GHR_VERSION}_linux_amd64/
             - run:
