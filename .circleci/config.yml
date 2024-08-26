@@ -8,10 +8,10 @@ jobs:
             - run: git submodule sync
             - run: git submodule update --init
             - run: docker build -t build-linux-aarch64 .
-            - run: docker run -v $(realpath ./qemu):/mnt/src build-linux-aarch64
+            - run: docker run -v $(realpath ./):/mnt/src build-linux-aarch64 RUSTFLAGS="-C target-feature=+crt-static" cargo build --target aarch64-unknown-linux-gnu --release
             - store_artifacts:
-                destination: qemu-aarch64-unknown-linux-gnu
-                path: qemu/build/qemu-system-x86_64
+                destination: minit-aarch64
+                path: target/aarch64-unknown-linux-gnu/release/minit
     build-linux-x86_64:
         machine:
             image: ubuntu-2204:2024.05.1
@@ -20,10 +20,10 @@ jobs:
             - run: git submodule sync
             - run: git submodule update --init
             - run: docker build -t build-linux-x86-64 .
-            - run: docker run -v $(realpath ./qemu):/mnt/src build-linux-x86-64
+            - run: docker run -v $(realpath ./):/mnt/src build-linux-x86-64
             - store_artifacts:
-                destination: qemu-x86_64-unknown-linux-gnu
-                path: qemu/build/qemu-system-x86_64
+                destination: minit-x86_64
+                path: target/x86_64-unknown-linux-gnu/release/minit
     publish-github-release:
         docker:
             - image: cibuilds/github:0.10
