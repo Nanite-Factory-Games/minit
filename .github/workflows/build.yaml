@@ -28,5 +28,5 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: uploads
-        path: ${{ github.workspace }}/target/x86_64-unknown-linux-gnu/release/minit(x86_64)
+        path: ${{ github.workspace }}/build/minit-x86_64
         if-no-files-found: error
