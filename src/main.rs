@@ -13,6 +13,7 @@ use nix::sys::signal::{self, SigSet};
 use nix::sys::signalfd;
 
 pub fn main() {
+    println!("Running minit init system");
     unsafe {
         wrapped_main();
     }
