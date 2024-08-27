@@ -17,9 +17,9 @@ use serde::Deserialize;
 #[derive(Deserialize)]
 pub struct Config {
     /// If defined, should be the entrypoint minit passes cmd args to
-    pub entrypoint_path: Option<String>,
+    pub entrypoint: Option<Vec<String>>,
     /// Must be defined as it is the main program the os will run
-    pub cmd: String,
+    pub cmd: Vec<String>,
     /// Mapping of environment variables to their values
     pub environment: Option<HashMap<String, String>>,
 }
