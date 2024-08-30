@@ -39,15 +39,21 @@ unsafe fn wrapped_main() -> Result<()>{
         }
     }
 
+    // Set up logging.
+    let env = Env::new()
+        .filter("MINIT_LOG")
+        .write_style("MINIT_LOG_STYLE");
+    env_logger::init_from_env(env);
+
     // Check if the current exe is the same as the /sbin/init link
     let current_path = env::current_exe().expect("could not get current exe path");
     let init_path = fs::read_link("/sbin/init");
 
     if let Ok(init_path) = init_path {
         if current_path == init_path {
-            info!("minit is running as /sbin/init, it will act as the init process");
+            println!("minit is running as /sbin/init, it will act as the init process");
         } else {
-            info!("An init binary is linked to /sbin/init, it will act as the init process from now on");
+            println!("An init binary is linked to /sbin/init, it will act as the init process from now on");
             let init_type = InitType::from_binpath(&init_path)?;
             init_type.setup_system(&config)?;
             // This will either return if there was an error or it will replace this process with the init process
@@ -55,12 +61,6 @@ unsafe fn wrapped_main() -> Result<()>{
         }
     }
     // If we are here, we are continuing on as the primary init process
-
-    // Set up logging.
-    let env = Env::new()
-        .filter("MINIT_LOG")
-        .write_style("MINIT_LOG_STYLE");
-    env_logger::init_from_env(env);
 
     // We need to store the initial signal mask first, which we will restore
     // before execing the user process (signalfd requires us to block all
@@ -108,7 +108,7 @@ unsafe fn wrapped_main() -> Result<()>{
     let pid1 = Pid::from_raw(child.id() as i32);
     loop {
         match process_signals(pid1, &mut sfd) {
-            Err(err) => info!("unexpected error during signal handling: {}", err),
+            Err(err) => println!("unexpected error during signal handling: {}", err),
             Ok(pids) => {
                 if pids.contains(&pid1) {
                     break;
