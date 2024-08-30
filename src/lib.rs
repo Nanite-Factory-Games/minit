@@ -1,7 +1,8 @@
 use std::collections::HashMap;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::{Error, ErrorKind};
 use std::convert::TryFrom;
+use std::path::Path;
 
 use libc::c_int;
 
@@ -12,7 +13,19 @@ use nix::sys::wait::{self, waitpid};
 use nix::sys::signal::{self, kill, Signal};
 use nix::sys::signalfd;
 use nix::unistd::tcsetpgrp;
-use serde::Deserialize;
+use serde::{de, Deserialize};
+use anyhow::{bail, Context, Result};
+
+pub mod templ;
+pub enum InitType {
+    Systemd,
+    SysVinit,
+    Upstart,
+    OpenRC,
+    Runit,
+    S6,
+    Busybox 
+}
 
 #[derive(Deserialize)]
 pub struct Config {
@@ -24,7 +37,58 @@ pub struct Config {
     pub environment: Option<HashMap<String, String>>,
 }
 
-/// Reaps all zombies that are children of initrs, returning the list of pids
+impl InitType {
+    pub fn from_binpath(bin_path: &Path) -> Result<InitType> {
+        let bin_name = bin_path.file_name().context("Init isn't linked to a file")?.to_str().context("File name couldn't be converted to string")?;
+        let full_path = bin_path.to_str().context("Init isn't linked to a file")?;
+        match bin_name {
+            "systemd" => Ok(InitType::Systemd),
+            "upstart" => Ok(InitType::Upstart),
+            "openrc" => Ok(InitType::OpenRC),
+            "runit" => Ok(InitType::Runit),
+            "s6-rc" => Ok(InitType::S6),
+            "busybox" => Ok(InitType::Busybox),
+            _ => {
+                if full_path.ends_with("sysvinit/init") {
+                    Ok(InitType::SysVinit)
+                } else {
+                    Err(anyhow::anyhow!("Init isn't a supported init system"))
+                }
+            }
+        }
+    }
+
+    /// Updates the system so that it will run the established command and entrypoint on startup
+    pub fn setup_system(&self, config: &Config) -> Result<()>{
+        match self {
+            // For systemd we need to create a service definition and then symlink it to the directory for the program to find it
+            InitType::Systemd => {
+                let definition = templ::systemd::get_service_definition(config);
+                fs::write(Path::new("/etc/systemd/system/minit.service"), definition.as_bytes())?;
+                std::os::unix::fs::symlink(
+                    Path::new("/etc/systemd/system/minit.service"),
+                    Path::new("/etc/systemd/system/default.target.wants/minit.service"),
+                )?;
+            },
+            InitType::Upstart => {bail!("Upstart is not yet supported")},
+            InitType::OpenRC => {
+                let definition = templ::openrc::get_service_definition(config);
+                fs::write(Path::new("/etc/init.d/minit"), definition.as_bytes())?;
+                std::os::unix::fs::symlink(
+                    Path::new("/etc/init.d/minit"),
+                    Path::new("/etc/runlevels/default/minit"),
+                )?;
+            },
+            InitType::Runit => {bail!("Runit is not yet supported")},
+            InitType::S6 => {bail!("S6 is not yet supported")},
+            InitType::Busybox => {bail!("Busybox is not yet supported")},
+            InitType::SysVinit => {bail!("SysVinit is not yet supported")},
+        }
+        Ok(())
+    }
+}
+
+/// Reaps all zombies that are children of minit, returning the list of pids
 /// that were reaped. If there are no children left alive or no children were
 /// reaped, no error is returned. Unknown status codes from waitpid(2) are
 /// logged and ignored.

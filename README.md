@@ -21,13 +21,6 @@ variables are loaded into the system.
 The entrypoint and command are also not present on the filesystem, so they need
 to be passed via environment variables.
 
-## Usage
-If you try to run this with arguments, you will notice it will not work.
-This is because minit is designed to use environment variables to determine
-the command to run.
-
-MINIT_ENTRYPOINT_PATH - The absolute path to the entrypoint file
-MINIT_CMD - The command that should be run. The command will be run as the foreground process
 
 ## Building
 To build minit, you can either build it yourself or use the docker image

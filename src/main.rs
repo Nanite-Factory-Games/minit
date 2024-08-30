@@ -1,4 +1,4 @@
-use std::env::set_var;
+use std::env::{self, set_var};
 use std::fs;
 use std::path::Path;
 use std::process::Command;
@@ -7,21 +7,22 @@ use std::os::unix::process::CommandExt;
 use env_logger::Env;
 
 use log::{debug, info};
-use minit::{make_foreground, process_signals, Config};
+use minit::{make_foreground, process_signals, Config, InitType};
 use nix::unistd::Pid;
 use nix::sys::signal::{self, SigSet};
 use nix::sys::signalfd;
+use anyhow::Result;
 
 pub fn main() {
     println!("Running minit init system");
     unsafe {
-        wrapped_main();
+        wrapped_main().unwrap();
     }
 }
 
 /// We wrap the main function in an unsafe block to keep the code just
 /// a little bit more readable.
-unsafe fn wrapped_main() {
+unsafe fn wrapped_main() -> Result<()>{
 
     // Load the configuration used to initialize the main program
     let config_path = Path::new("/etc/minit.json");
@@ -32,11 +33,28 @@ unsafe fn wrapped_main() {
         .expect("Failed to parse minit.json");
 
     // Set environment variables from config
-    if let Some(environment) = config.environment {
+    if let Some(environment) = &config.environment {
         for (key, value) in environment {
             set_var(key, value);
         }
     }
+
+    // Check if the current exe is the same as the /sbin/init link
+    let current_path = env::current_exe().expect("could not get current exe path");
+    let init_path = fs::read_link("/sbin/init");
+
+    if let Ok(init_path) = init_path {
+        if current_path == init_path {
+            info!("minit is running as /sbin/init, it will act as the init process");
+        } else {
+            info!("An init binary is linked to /sbin/init, it will act as the init process from now on");
+            let init_type = InitType::from_binpath(&init_path)?;
+            init_type.setup_system(&config)?;
+            // This will either return if there was an error or it will replace this process with the init process
+            return Err(Command::new("/sbin/init").exec().into());
+        }
+    }
+    // If we are here, we are continuing on as the primary init process
 
     // Set up logging.
     let env = Env::new()
@@ -100,4 +118,5 @@ unsafe fn wrapped_main() {
     }
 
     debug!("bailing: pid1 {} has exited", pid1);
+    Ok(())
 }
