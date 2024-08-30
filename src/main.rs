@@ -60,6 +60,7 @@ unsafe fn wrapped_main() -> Result<()>{
             return Err(Command::new("/sbin/init").exec().into());
         }
     }
+    println!("No init binary found at /sbin/init, continuing as the primary init process");
     // If we are here, we are continuing on as the primary init process
 
     // We need to store the initial signal mask first, which we will restore
