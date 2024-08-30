@@ -84,7 +84,9 @@ impl InitType {
             InitType::Busybox => {
                 let runfile = templ::busybox::get_runfile_definition(config);
                 let definition = templ::busybox::get_service_definition();
+                println!("Writing runfile");
                 fs::write(Path::new("/etc/init.d/minit.sh"), runfile.as_bytes())?;
+                println!("Writing inittab");
                 fs::write(Path::new("/etc/inittab"), definition.as_bytes())?;
             },
             InitType::SysVinit => {bail!("SysVinit is not yet supported")},
