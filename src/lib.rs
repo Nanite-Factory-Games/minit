@@ -1,7 +1,8 @@
 use std::collections::HashMap;
-use std::fs::{self, File};
+use std::fs::{self, File, Permissions};
 use std::io::{Error, ErrorKind};
 use std::convert::TryFrom;
+use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 
 use libc::c_int;
@@ -85,7 +86,9 @@ impl InitType {
                 let runfile = templ::busybox::get_runfile_definition(config);
                 let definition = templ::busybox::get_service_definition();
                 println!("Writing runfile");
+                fs::create_dir_all(Path::new("/etc/init.d"))?;
                 fs::write(Path::new("/etc/init.d/minit.sh"), runfile.as_bytes())?;
+                fs::set_permissions(Path::new("/etc/init.d/minit.sh"), Permissions::from_mode(0o777))?;
                 println!("Writing inittab");
                 fs::write(Path::new("/etc/inittab"), definition.as_bytes())?;
             },
