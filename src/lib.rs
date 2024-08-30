@@ -81,7 +81,12 @@ impl InitType {
             },
             InitType::Runit => {bail!("Runit is not yet supported")},
             InitType::S6 => {bail!("S6 is not yet supported")},
-            InitType::Busybox => {bail!("Busybox is not yet supported")},
+            InitType::Busybox => {
+                let runfile = templ::busybox::get_runfile_definition(config);
+                let definition = templ::busybox::get_service_definition();
+                fs::write(Path::new("/etc/init.d/minit.sh"), runfile.as_bytes())?;
+                fs::write(Path::new("/etc/inittab"), definition.as_bytes())?;
+            },
             InitType::SysVinit => {bail!("SysVinit is not yet supported")},
         }
         Ok(())

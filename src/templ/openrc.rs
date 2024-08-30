@@ -2,22 +2,18 @@ use crate::Config;
 
 
 pub fn get_service_definition(config: &Config) -> String {
-    let command_string = match &config.entrypoint {
+    let (first_path, args) = match &config.entrypoint {
         Some(entrypoint) => {
-            let mut command = String::new();
-            command.push_str(&entrypoint[..].join(" "));
-            command.push_str(" ");
-            command.push_str(&config.cmd.join(" "));
-            command
+            let first_path = entrypoint[0].clone();
+            let args = [&entrypoint[1..], &(&config.cmd)[..]].concat().join(" ");
+            (first_path, args)
         },
         None => {
-            let mut command = String::new();
-            command.push_str(&config.cmd[..].join(" "));
-            command
+            let first_path = config.cmd[0].clone();
+            let args = config.cmd[1..].join(" ");
+            (first_path, args)
         }
     };
-    let first_path = config.cmd[0].clone();
-    let args = config.cmd[1..].join(" ");
     return format!("
 #!/sbin/openrc-run
 
