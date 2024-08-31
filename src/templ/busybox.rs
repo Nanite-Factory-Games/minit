@@ -37,8 +37,7 @@ pub fn get_runfile_definition(config: &Config) -> String {
             command
         }
     };
-    return format!("
-#!/bin/sh
+    return format!("#!/bin/sh
 
 exec {command_string}
 ");
