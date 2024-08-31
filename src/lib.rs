@@ -99,6 +99,8 @@ impl InitType {
                 fs::set_permissions(Path::new("/etc/init.d/minit.sh"), Permissions::from_mode(0o777))?;
                 println!("Writing inittab");
                 fs::write(Path::new("/etc/inittab"), definition.as_bytes())?;
+                println!("Writing out runfile contents");
+                println!("{}", runfile);
             },
             InitType::SysVinit => {bail!("SysVinit is not yet supported")},
         }
