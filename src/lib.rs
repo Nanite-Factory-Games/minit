@@ -5,11 +5,11 @@ use std::io::{Error, ErrorKind};
 use std::convert::TryFrom;
 use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
+use std::process::Command;
 
 use libc::c_int;
 
 use log::{debug, info};
-use nix::mount::{mount, MsFlags};
 use nix::errno::Errno;
 use nix::unistd::{self, setpgid, Pid};
 use nix::sys::wait::{self, waitpid};
@@ -101,16 +101,10 @@ impl InitType {
 }
 
 pub fn remount_root_rw() -> Result<()> {
-    let source = CString::new("/")?;
-
     // Remount the root filesystem as read-write
-    mount(
-        None::<&str>,
-        &*source,
-        None::<&str>,
-        MsFlags::MS_REMOUNT,
-        None::<&str>,
-    )?;
+    Command::new("mount")
+        .args(["-o", "remount,rw", "/"])
+        .output()?;
     Ok(())
 }
 
