@@ -3,8 +3,21 @@ use crate::Config;
 
 pub fn get_service_definition() -> String {
     return "
-::sysinit:/etc/init.d/rcS
 ::respawn:/bin/sh
+::wait:/etc/init.d/minit.sh
+".to_string();
+}
+
+/// if we are chaining busybox into openrc, we need a different config
+/// for the service definition
+pub fn get_service_definition_with_openrc() -> String {
+    return "
+# /etc/inittab
+::sysinit:/sbin/openrc sysinit
+::sysinit:/sbin/openrc boot
+::wait:/sbin/openrc default
+
+::shutdown:/sbin/openrc shutdown
 ::wait:/etc/init.d/minit.sh
 ".to_string();
 }

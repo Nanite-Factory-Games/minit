@@ -86,7 +86,13 @@ impl InitType {
             InitType::S6 => {bail!("S6 is not yet supported")},
             InitType::Busybox => {
                 let runfile = templ::busybox::get_runfile_definition(config);
-                let definition = templ::busybox::get_service_definition();
+                let definition = if Path::new("/sbin/openrc").exists() {
+                    println!("Using openrc chain");
+                    templ::busybox::get_service_definition_with_openrc()
+                } else {
+                    println!("Using busybox with no init");
+                    templ::busybox::get_service_definition()
+                };
                 println!("Writing runfile");
                 fs::create_dir_all(Path::new("/etc/init.d"))?;
                 fs::write(Path::new("/etc/init.d/minit.sh"), runfile.as_bytes())?;
