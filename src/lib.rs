@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::ffi::CString;
 use std::fs::{self, File, Permissions};
 use std::io::{Error, ErrorKind};
 use std::convert::TryFrom;
@@ -8,6 +9,7 @@ use std::path::Path;
 use libc::c_int;
 
 use log::{debug, info};
+use nix::mount::{mount, MsFlags};
 use nix::errno::Errno;
 use nix::unistd::{self, setpgid, Pid};
 use nix::sys::wait::{self, waitpid};
@@ -96,6 +98,20 @@ impl InitType {
         }
         Ok(())
     }
+}
+
+pub fn remount_root_rw() -> Result<()> {
+    let source = CString::new("/")?;
+
+    // Remount the root filesystem as read-write
+    mount(
+        None::<&str>,
+        &*source,
+        None::<&str>,
+        MsFlags::MS_REMOUNT | MsFlags::MS_RDONLY,
+        None::<&str>,
+    )?;
+    Ok(())
 }
 
 /// Reaps all zombies that are children of minit, returning the list of pids

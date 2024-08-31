@@ -7,7 +7,7 @@ use std::os::unix::process::CommandExt;
 use env_logger::Env;
 
 use log::{debug, info};
-use minit::{make_foreground, process_signals, Config, InitType};
+use minit::{make_foreground, process_signals, remount_root_rw, Config, InitType};
 use nix::unistd::Pid;
 use nix::sys::signal::{self, SigSet};
 use nix::sys::signalfd;
@@ -55,6 +55,8 @@ unsafe fn wrapped_main() -> Result<()>{
         } else {
             println!("An init binary is linked to /sbin/init, it will act as the init process from now on");
             let init_type = InitType::from_binpath(&init_path)?;
+            println!("Remounting root filesystem as read-write");
+            remount_root_rw()?;
             init_type.setup_system(&config)?;
             // This will either return if there was an error or it will replace this process with the init process
             return Err(Command::new("/sbin/init").exec().into());
