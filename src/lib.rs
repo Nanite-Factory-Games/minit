@@ -108,7 +108,7 @@ pub fn remount_root_rw() -> Result<()> {
         None::<&str>,
         &*source,
         None::<&str>,
-        MsFlags::MS_REMOUNT | MsFlags::MS_RDONLY,
+        MsFlags::MS_REMOUNT,
         None::<&str>,
     )?;
     Ok(())
