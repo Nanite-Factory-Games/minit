@@ -12,9 +12,9 @@ pub fn get_service_definition() -> String {
 /// for the service definition
 pub fn get_service_definition_with_openrc() -> String {
     return "# /etc/inittab
-::sysinit:/sbin/openrc sysinit
-::sysinit:/sbin/openrc boot
-::wait:/sbin/openrc default
+::sysinit:/sbin/openrc --verbose sysinit
+::sysinit:/sbin/openrc --verbose  boot
+::wait:/sbin/openrc --verbose default
 
 ::shutdown:/sbin/openrc shutdown
 ".to_string();
