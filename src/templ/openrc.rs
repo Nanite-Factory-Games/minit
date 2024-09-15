@@ -23,8 +23,5 @@ command=\"{first_path}\"
 command_args=\"{args}\"
 command_background=false
 
-depend() {{
-    after *
-}}
 ");
 }

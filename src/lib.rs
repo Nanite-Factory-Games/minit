@@ -88,6 +88,7 @@ impl InitType {
                 let runfile = templ::busybox::get_runfile_definition(config);
                 let definition = if Path::new("/sbin/openrc").exists() {
                     println!("Using openrc chain");
+                    InitType::OpenRC.setup_system(config)?;
                     templ::busybox::get_service_definition_with_openrc()
                 } else {
                     println!("Using busybox with no init");
