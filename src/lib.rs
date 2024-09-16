@@ -85,23 +85,22 @@ impl InitType {
             InitType::Runit => {bail!("Runit is not yet supported")},
             InitType::S6 => {bail!("S6 is not yet supported")},
             InitType::Busybox => {
-                let runfile = templ::busybox::get_runfile_definition(config);
                 let definition = if Path::new("/sbin/openrc").exists() {
                     println!("Using openrc chain");
                     InitType::OpenRC.setup_system(config)?;
                     templ::busybox::get_service_definition_with_openrc()
                 } else {
                     println!("Using busybox with no init");
+                    let runfile = templ::busybox::get_runfile_definition(config);
+                    println!("Writing runfile");
+                    fs::create_dir_all(Path::new("/etc/init.d"))?;
+                    fs::write(Path::new("/etc/init.d/minit.sh"), runfile.as_bytes())?;
+                    fs::set_permissions(Path::new("/etc/init.d/minit.sh"), Permissions::from_mode(0o777))?;
                     templ::busybox::get_service_definition()
                 };
-                println!("Writing runfile");
-                fs::create_dir_all(Path::new("/etc/init.d"))?;
-                fs::write(Path::new("/etc/init.d/minit.sh"), runfile.as_bytes())?;
-                fs::set_permissions(Path::new("/etc/init.d/minit.sh"), Permissions::from_mode(0o777))?;
+                
                 println!("Writing inittab");
                 fs::write(Path::new("/etc/inittab"), definition.as_bytes())?;
-                println!("Writing out runfile contents");
-                println!("{}", runfile);
             },
             InitType::SysVinit => {bail!("SysVinit is not yet supported")},
         }
