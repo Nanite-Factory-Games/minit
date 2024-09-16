@@ -15,7 +15,8 @@ pub fn get_service_definition_with_openrc() -> String {
 ::sysinit:/sbin/openrc sysinit --verbose
 ::respawn:/usr/bin/tail -f /var/log/rc.log
 ::wait:/sbin/openrc boot --verbose
-::wait:/sbin/openrc --verbose
+::wait:/usr/bin/ls -la /etc/runlevels/default
+::wait:/sbin/openrc default --verbose
 
 ::shutdown:/sbin/openrc shutdown
 ".to_string();
