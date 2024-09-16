@@ -13,7 +13,7 @@ pub fn get_service_definition() -> String {
 pub fn get_service_definition_with_openrc() -> String {
     return "# /etc/inittab
 ::sysinit:/sbin/openrc sysinit --verbose
-::boot:/usr/bin/tail -f /var/log/rc.log
+::respawn:/usr/bin/tail -f /var/log/rc.log
 ::wait:/sbin/openrc boot --verbose
 ::wait:/sbin/openrc --verbose
 
